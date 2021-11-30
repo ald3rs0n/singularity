@@ -1,0 +1,8 @@
+get_quote()
+get_index_list()
+get_index_quote()
+get_stock_quotes()
+get_advences_declines()
+get_top_gainers()
+is_valid_code()
+get_fno_lot_sizes()     
