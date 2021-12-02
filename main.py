@@ -81,21 +81,15 @@ class Utilis():
         except TypeError:
             return False
 
-# pp = "INTERIM DIVIDEND - RS 5.60 PER SHARE"
-# print((re.findall("DIVIDEND",pp))[0])
-
-# print(type(Utilis.getPurpose("NTERIM DIVIDE - RS 5.60 PER SHARE")))
-
-
 def main(nse,ptn):
     # Create files to write output
     fname = "NSE-stocks-"+datetime.now().strftime("%d-%m-%Y")+".csv"
     gname = "NSE-upcoming-Dividend-"+datetime.now().strftime("%d-%m-%Y")+".csv"
 
     f = open(fname,'a')
-    f.write("Company name,Purpose,Ex-dividend Date,Dividend Yield,Dividend,Base Price,Upcoming")
+    f.write("Company name,Purpose,Ex-dividend Date,Dividend Yield,Dividend,Base Price\r\n")
     g = open(gname,'a')
-    g.write("Company name,Ex-dividend Date,Dividend Yield,Dividend,Base Price,Upcoming")
+    g.write("Company name,Ex-dividend Date,Dividend Yield,Dividend,Base Price,Upcoming\r\n")
 
     # calling to nse API
     # stock_codes = nse.get_stock_codes(cached=False)
@@ -118,9 +112,11 @@ def main(nse,ptn):
                 dividendYield = Utilis.divYield(dividend,basePrice)
                 upcoming = Utilis.findUpcomingDividend(exDividendDate)
                 terminalOutput(count,totalStocks,key,companyName,purpose,dividend,exDividendDate,dividendYield,basePrice,upcoming)
-                # fileOutput(f,g,companyName,purpose,exDividendDate,dividendYield,dividend,basePrice,upcoming)
+                fileOutput(f,g,companyName,purpose,exDividendDate,dividendYield,dividend,basePrice,upcoming)
         except IndexError:
             print("Something went wrong...")
+        except:
+            print("Unknown error...")
     f.close()
     g.close()
 
@@ -130,3 +126,5 @@ main(nse,ptn)
 # 3. Sort according to dividend yield
 # 4. make in interactive to terminal,takes file name gives option to choose output destination.
 # 5. store all the gathered info in a database
+# 6. import os,sys module to make terminal output more fancy
+# 7. Delete <2% dividend and dividend before 2021
