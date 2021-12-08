@@ -9,27 +9,30 @@ ptn = '((RS |RE )[0-9.]+)'
 nse = Nse()
 #function that returns output to terminal
 def terminalOutput(count,totalStocks,key,companyName,purpose,dividend,exDividendDate,dY,basePrice,upcoming):
-    print("|\t\033[0;36m {0:78}/{1} \033[0m|".format(count,totalStocks))
-    print("|\t {0:10} : {1:70} |".format(key,companyName))
-    print("|\t\033[32;1m {0:82} \033[0m |".format(purpose))
-    print("|\t Dividend of RS {0:68} |".format(dividend))
-    if upcoming:
-        print("|\t\033[32;1m Ex Dividend Date : {0:64}\033[0m |".format(exDividendDate))
-    else:
-        print("|\t Ex Dividend Date : {0:64} |".format(exDividendDate))
-    print("|\t Base Price : {0:70} |".format(basePrice))
-    if dY >= 4 :
-        print("|\t Dividend Yield : \033[32;1m{0:66}\033[0m |".format(dY))
-    elif dY >= 2 and dY < 4 :
-        print("|\t Dividend Yield : \033[1;33m{0:66}\033[0m |".format(dY))
-    else:
-        print("|\t Dividend Yield : {0:66} |".format(dY))
-    print("|"+92*'-'+"|")
+    if dY > 2:
+        print("|\t\033[0;36m {0:78}/{1} \033[0m|".format(count,totalStocks))
+        print("|\t {0:10} : {1:70} |".format(key,companyName))
+        print("|\t\033[32;1m {0:82} \033[0m |".format(purpose))
+        print("|\t Dividend of RS {0:68} |".format(dividend))
+        if upcoming:
+            print("|\t\033[32;1m Ex Dividend Date : {0:64}\033[0m |".format(exDividendDate))
+        else:
+            print("|\t Ex Dividend Date : {0:64} |".format(exDividendDate))
+        print("|\t Base Price : {0:70} |".format(basePrice))
+        if dY >= 4 :
+            print("|\t Dividend Yield : \033[32;1m{0:66}\033[0m |".format(dY))
+        elif dY >= 2 and dY < 4 :
+            print("|\t Dividend Yield : \033[1;33m{0:66}\033[0m |".format(dY))
+        else:
+            pass
+            # print("|\t Dividend Yield : {0:66} |".format(dY))
+        print("|"+92*'-'+"|")
 
 #function that returns output to a file
 def fileOutput(f,g,companyName,purpose,exDividendDate,dividendYield,dividend,basePrice,upcoming):
-    addToFileF = companyName+","+purpose+","+exDividendDate+","+str(dividendYield)+","+dividend+","+str(basePrice)+"\r\n"
-    f.write(addToFileF)
+    if dividendYield >= 2:
+        addToFileF = companyName+","+purpose+","+exDividendDate+","+str(dividendYield)+","+dividend+","+str(basePrice)+"\r\n"
+        f.write(addToFileF)
     if upcoming:
         addToFileG = companyName+","+exDividendDate+","+str(dividendYield)+","+dividend+","+str(basePrice)+"\r\n"
         g.write(addToFileG)
@@ -81,14 +84,14 @@ class Utilis():
         except TypeError:
             return False
 
-def main(nse,ptn):
+def dividend(nse,ptn):
     # Create files to write output
     fname = "NSE-stocks-"+datetime.now().strftime("%d-%m-%Y")+".csv"
     gname = "NSE-upcoming-Dividend-"+datetime.now().strftime("%d-%m-%Y")+".csv"
 
-    f = open(fname,'a')
+    f = open('static/'+fname,'a')
     f.write("Company name,Purpose,Ex-dividend Date,Dividend Yield,Dividend,Base Price\r\n")
-    g = open(gname,'a')
+    g = open('static'+gname,'a')
     g.write("Company name,Ex-dividend Date,Dividend Yield,Dividend,Base Price,Upcoming\r\n")
 
     # calling to nse API
@@ -114,14 +117,15 @@ def main(nse,ptn):
                 terminalOutput(count,totalStocks,key,companyName,purpose,dividend,exDividendDate,dividendYield,basePrice,upcoming)
                 fileOutput(f,g,companyName,purpose,exDividendDate,dividendYield,dividend,basePrice,upcoming)
         except IndexError:
-            print("Something went wrong...")
-        except:
-            print("Unknown error...")
+            print("Index Error...")
+        except ValueError:
+            print("Value Error...")
     f.close()
     g.close()
 
+if __name__ == "__main__":
+    dividend(nse,ptn)
 
-main(nse,ptn)
 # Todos:
 # 3. Sort according to dividend yield
 # 4. make in interactive to terminal,takes file name gives option to choose output destination.
