@@ -1,10 +1,12 @@
-from nsepy import get_history
+from nsepy import get_history # Get historical data from NSE site
 from datetime import datetime,date
-import pandas as pd
-import matplotlib.pyplot as plt
-import pandas_ta as ta
 from time import sleep
-import numpy as np
+from plotly.subplots import make_subplots as ms # Plotting framework
+import plotly.graph_objects as go
+import pandas as pd
+import dash # Backend server
+from dash import html,dcc
+from talib import * # Technical analysis library
 
 
 # Goal:
@@ -17,38 +19,62 @@ def getStocksList():
     stocks = ['IOCL','SBIN','ZOMATO','VEDL']
     return stocks
 
-def plotMACD():
-    # data = get_history(stock,date(2021,6,10),date(2021,11,30))
-    # data.to_csv(stock+'.csv')
-    y = np.array([0,0])
-    x = np.array([20,120])
-    data = pd.read_csv('static/IOCL.csv')
-    data.ta.macd(close="close",fast=12,slow=26,signal=9,append=True)
-    pd.set_option("display.max_columns",None)
-    dff = data.get(["Date","MACD_12_26_9","MACDs_12_26_9"])
-    # plot a graph of date vs MACD
-    dff.plot(x="Date")
-    plt.plot(x,y)
-    plt.title("MACD of IOCL")
-    # plt.title("MACD of "+stock)
-    plt.xlabel("Date")
-    plt.ylabel("MACD")
-    plt.show()
+# df = get_history(stock,date(2021,6,10),date(2021,11,30))
+df = pd.read_csv('static/IOCL.csv')
 
-def plotRSI():
-    pass
+class StockAnalysisTools():
+    def __init__(self,dataframe):
+        self.df = dataframe
 
-def plotMA():
-    pass
+    #This function plots the candlestick chart of a stock
+    def plotStock(self):
+        df =  self.df
+        fo = go.Candlestick(x=df['Date'],
+                        open=df['Open'],
+                        high=df['High'],
+                        low=df['Low'],
+                        close=df['Close'])
+        return fo
 
-def plotStochastics():
-    pass
+    # This function plots MACD chart along with candlestick chart of the stock
+    def plotMACD(self):
+        # fig = px.line(data,x=data['Date'],y=data['Open'])
+        df = self.df
+        macd, macdsignal, macdhist = MACD(df['Close'], fastperiod=12, slowperiod=26, signalperiod=9)
+        # macd.dropna(inplace=True)
+        # macdsignal.dropna(inplace=True)
+        fa = go.Scatter(x=df['Date'],y=macd,name='line')
+        fb = go.Scatter(x=df['Date'],y=macdsignal,name='line')
+        return fa,fb
 
-def findChartPattern():
-    pass
+    # This function plots RSI chart
+    def plotRSI(self):
+        df = self.df
+        real = RSI(df['Close'], timeperiod=14)
+        fo = go.Scatter(x=df['Date'],y=real,name='line')
+        return fo
 
-def getSignal():
-    pass
+    # This function plots SMA chart along with candlestick chart of the stock
+    def plotSMA(self):
+        df = self.df
+        output = SMA(df['Open'])
+        fo = go.Scatter(x=df['Date'],y=output,name='line')
+        return fo
+
+    # This function plots Stochastics indicator along with candlestick chart of the stock
+    def plotStochastics(self):
+        df = self.df
+        slowk, slowd = STOCH(df['High'], df['Low'], df['Close'], fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+        fa = go.Scatter(x=df['Date'],y=slowk,name='line')
+        fb = go.Scatter(x=df['Date'],y=slowd,name='line')
+        return fa,fb
+
+
+    def findChartPattern():
+        pass
+
+    def getSignal():
+        pass
 
 
 stocks = getStocksList()
@@ -57,10 +83,21 @@ stocks = getStocksList()
     # plotMACD(stock)
     # sleep(5)
 
-plotMACD()
+def traceIndicators(df):
+    fig = go.Figure()
+    fig = ms(rows=4,cols=1)
+    fig.update_layout(height=800,width=1340,template="plotly_dark",xaxis_rangeslider_visible=False)
+    fig.add_trace(StockAnalysisTools(df).plotStock())
+    fig.add_trace(StockAnalysisTools(df).plotSMA())
+    fig.add_trace(StockAnalysisTools(df).plotRSI(),row=2,col=1)
+    fa,fb = StockAnalysisTools(df).plotMACD()
+    fig.add_traces([fa,fb], rows=[3,3], cols=[1,1])
+    fc,fd = StockAnalysisTools(df).plotStochastics()
+    fig.add_traces([fc,fd], rows=[4,4], cols=[1,1])
+    return fig
 
-# plt.plot()
-# plt.show()
+fig = traceIndicators(df)
 
-# df = pd.read_csv('/home/darkphoton/Works/singularity/NSE-stocks-04-12-2021.csv')
-# print(df.drop(columns=["Purpose","Ex-dividend Date"]))
+app = dash.Dash()
+app.layout = html.Div([dcc.Graph(figure=fig)])
+app.run_server(debug=True)
