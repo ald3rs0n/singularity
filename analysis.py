@@ -1,6 +1,7 @@
 from talib import *
 import pandas as pd
-
+from tools import StockAnalysisTools as SAT
+from getdata import getData
 
 ###     Analysis:
 ###     Plan:
@@ -8,26 +9,33 @@ import pandas as pd
 ###     plotting signal and pattern to visalize data -- done
 ###     view signal details in web,beside plot and store in file/database
 
-df = pd.read_csv('static/IOCL.csv')
-macd, macdsignal, macdhist = MACD(df['Close'], fastperiod=12, slowperiod=26, signalperiod=9)
+# Does analysis on dataframes on given indicators and retunrs list of buy and sell options
+def doAnalysis(df,*args):
+    output = []
+    # for df in dataframes:
+    for arg in args:
+        if arg.upper() == "RSI":
+            rsi = SAT(df).analyzeRSI()
+            output.append(rsi)
+        elif arg.upper() == "STOCH":
+            sto = SAT(df).analyzeStochastics()
+            output.append(sto)
+        else:
+            print("Invalid Operation : "+arg+"\r\n")
+    return output
 
-real = RSI(df['Close'], timeperiod=14)
+# takes list of buy and sell dataframe and writes to a csv file
+def writetocsv(vals):
+    for val in vals:
+        try:
+            val.to_csv('analyzed/'+val.at[0,'symbol']+'_'+(val.columns.values)[2]+'.csv')
+        except:
+            pass
 
+# dataframes = getData()
+# vals = doAnalysis(dataframes,'rsi','stoch')
 
-
-data = {
-    'date' : df['Date'],
-    'RSI' : real
-    }
-
-dff = pd.DataFrame(data)
-dff.dropna(inplace=True)
-
-for index,row in dff.iterrows():
-    if row['RSI'] >= 70 :
-        print("{0} Sell {1} \r\n".format(row['RSI'],row['date']))
-
-# print(dff.to_string())
-# print(type(dff))
-
-# print(macdsignal.to_string())
+# writetocsv(vals)
+# for val in vals:
+    # print(val)
+# print(dataframes)
