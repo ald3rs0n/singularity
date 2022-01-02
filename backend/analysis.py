@@ -8,7 +8,7 @@ from backend.tools import StockAnalysisTools as SAT
 ###     plotting signal and pattern to visalize data -- done
 ###     view signal details in web,beside plot and store in file/database
 
-# Does analysis on a single dataframe on given indicators and retunrs list of buy and sell options
+# Does analysis on a single dataframe on given indicators and retunrs list of dataframe of buy and sell options
 def doAnalysis(df,args):
     output = []
     pRSI = {
@@ -36,13 +36,13 @@ def doAnalysis(df,args):
     for arg in args:
         if arg.upper() == "RSI":
             rsi = SAT(df).analyzeRSI(pRSI)
-            output.append(rsi.iloc[-1:-6:-1])
+            output.append(rsi.iloc[0:5])
         elif arg.upper() == "STOCH":
             sto = SAT(df).analyzeStochastics(pSTO)
-            output.append(sto.iloc[-1:-6:-1])
+            output.append(sto.iloc[0:5])
         elif arg.upper() == "MACD":
             macd = SAT(df).analyzeMACD(pMACD)
-            output.append(macd.iloc[-1:-6:-1])
+            output.append(macd.iloc[0:5])
         else:
             print("Invalid Operation : "+arg+"\r\n")
     return output

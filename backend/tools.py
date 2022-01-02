@@ -19,7 +19,7 @@ class StockAnalysisTools():
         real = RSI(df[pRSI['price'].capitalize()], timeperiod=pRSI['time'])
         data = {
             'date' : df['Date'],
-            'RSI' : real,
+            'RSI' : round(real,2),
             'price' : df['Close']
         }
         dff = pd.DataFrame(data)
@@ -40,8 +40,8 @@ class StockAnalysisTools():
                 output['price'].append(row['price'])
                 output['adv'].append("BUY")
                 # buy.append("Buy @ {2} on {1} ; RSI:{0} \r\n".format(row['RSI'],row['date'],row['price']))
-        # return (pd.DataFrame(output).iloc[::-1])
-        return (pd.DataFrame(output))
+        return (pd.DataFrame(output).iloc[::-1])
+        # return (pd.DataFrame(output))
 
     # Does Stochstic buy and sell analysis and returns a pandas dataframe
     def analyzeStochastics(self,pSTO={'buy':20,'sell':80,'fastkp':5, 'slowkp':3, 'slowkm':0, 'slowdp':3, 'slowdm':0}):
@@ -49,8 +49,8 @@ class StockAnalysisTools():
         slowk, slowd = STOCH(df['High'], df['Low'], df['Close'], fastk_period=pSTO['fastkp'], slowk_period=pSTO['slowkp'], slowk_matype=pSTO['slowkm'], slowd_period=pSTO['slowdp'], slowd_matype=pSTO['slowdm'])
         data = {
             'date' : df['Date'],
-            'slowk' : slowk,
-            'slowd' : slowd,
+            'slowk' : round(slowk,2),
+            'slowd' : round(slowd,2),
             'price' : df['Close']
             }
         dff = pd.DataFrame(data)
@@ -71,8 +71,8 @@ class StockAnalysisTools():
                  output['price'].append(row['price'])
                  output['adv'].append("BUY")
                 # buy.append("Date: {0},price: {1} buy ,stochastic \r\n".format(row['date'],row['price']))
-        # return (pd.DataFrame(output).iloc[-1:-6:-1])
-        return (pd.DataFrame(output))
+        return (pd.DataFrame(output).iloc[::-1])
+        # return (pd.DataFrame(output))
 
     # Does MACD buy and sell analysis and returns a pandas dataframe
     def analyzeMACD(self,pMACD={'price':'close','fp':12,'sp':26,'slp':9}):
@@ -80,9 +80,9 @@ class StockAnalysisTools():
         macd, macdsignal, macdhist = MACD(df[pMACD['price'].capitalize()], fastperiod=pMACD['fp'], slowperiod=pMACD['sp'], signalperiod=pMACD['slp'])
         data = {
             'date' : df['Date'],
-            'macd' : macd,
-            'macdsignal' : macdsignal,
-            'macdhist' :macdhist,
+            'macd' : round(macd,2),
+            'macdsignal' : round(macdsignal,2),
+            'macdhist' :round(macdhist,2),
             'price' : df['Close']
         }
         dff = pd.DataFrame(data)
@@ -130,13 +130,9 @@ class StockAnalysisTools():
                     output['MACD'].append(dff.at[(i+1),'macdsignal'])
                     output['price'].append(dff.at[(i+1),'price'])
                     output['adv'].append("SELL")
-        # return(pd.DataFrame(output).iloc[-1:-6:-1])
-        return(pd.DataFrame(output))
+        return(pd.DataFrame(output).iloc[::-1])
+        # return(pd.DataFrame(output))
                 
-
-
-
-
 
 
 class VisualizationTools():
@@ -144,20 +140,38 @@ class VisualizationTools():
         self.df = dataframe
 
     #This function plots the candlestick chart of a stock
-    def plotStock(self):
+    def plotStock(self,plot='candle'):
         df =  self.df
-        fo = go.Candlestick(x=df['Date'],
-                        open=df['Open'],
-                        high=df['High'],
-                        low=df['Low'],
-                        close=df['Close'],
-                        increasing_line_color = 'cyan',
-                        increasing_fillcolor = 'cyan',
-                        decreasing_line_color = 'gray',
-                        decreasing_fillcolor = 'gray',
-                        name=(df['Symbol'])[0])
-        return fo
+        if plot == 'Mountain':
+            # pmin = MIN(df['Close'],timeperiod=50)
+            pmin = [min(df['Close']) for i in range(len(df))]
+            fa = go.Scatter(x=df['Date'],y=df['Close'],fill='tonexty',name=(df['Symbol'])[0],line_color='indigo')
+            fb = go.Scatter(x=df['Date'],y=pmin,fill=None,line_color='indigo',name=' ')
+            return (fb,fa)
+        elif plot == 'candle':
+            fc = go.Candlestick(x=df['Date'],
+                            open=df['Open'],
+                            high=df['High'],
+                            low=df['Low'],
+                            close=df['Close'],
+                            increasing_line_color = 'cyan',
+                            increasing_fillcolor = 'cyan',
+                            decreasing_line_color = 'gray',
+                            decreasing_fillcolor = 'gray',
+                            name=(df['Symbol'])[0])
+            return fc
 
+    # This function plots trade volume along with candlestick chart of the stock
+    def plotVolume(self):
+        df = self.df
+        pmin = min(df['Low'])
+        pmax = max(df['High'])
+        vmax = max(df['Volume'])
+        pavg = (pmin+pmax)/2
+        y = ((df['Volume']/vmax)*(pavg/5))
+        bar = go.Bar(x=df['Date'],y=y, marker_color='rgba(26, 118, 255,0.4)',name='vol')
+        return bar
+    
     # This function plots MACD chart along with candlestick chart of the stock
     def plotMACD(self,pMACD={'price':'close','fp':12,'sp':26,'slp':9}):
         df = self.df
@@ -182,13 +196,13 @@ class VisualizationTools():
         return fo,fp
 
     # This function plots SMA or EMA chart along with candlestick chart of the stock
-    def plotMA(self,pMA={'time':20,'price':'open','type':'SMA'}):
+    def plotMA(self,pMA={'time':20,'price':'open','type':'SMA','name':'SMA'}):
         df = self.df
         if pMA['type'] == 'SMA':
             output = SMA(df[pMA['price'].capitalize()], timeperiod=pMA['time'])
         elif pMA['type'] == 'EMA':
             output = EMA(df[pMA['price'].capitalize()], timeperiod=pMA['time'])
-        fo = go.Scatter(x=df['Date'],y=output,name='line')
+        fo = go.Scatter(x=df['Date'],y=output,name=pMA['name'])
         return fo
 
     # This function plots Stochastics indicator along with candlestick chart of the stock

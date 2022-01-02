@@ -1,22 +1,27 @@
 from datetime import date,datetime
-from backend.getdata import getAllData
-from backend.analysis import analyzeAll
+from backend.analysis import doAnalysis
 from terminaltables import AsciiTable
+from backend.dbconnect import getDataFromDB, updateDB
+# from dbconnect import getDataFromDB
+from static.watchlist import *
 
 
-
-dfs = getAllData()
-op = analyzeAll(dfs,['rsi','macd','stoch'])
-
-def printTable(op):
+# takes list of stocks to do analysis and prints a table on terminal
+def printTable(watchlist):
+    updateDB(watchlist,start_date=date(2021,12,20))
     tdate = datetime.date(datetime.now())
+    # tdate = date(2021,12,29)
     data = [['\033[0;37m Date \033[0m','\033[0;37m Name \033[0m','\033[0;37m Indicator \033[0m','\033[0;37m Value \033[0m','\033[0;37m Price \033[0m','\033[0;37m Advice \033[0m']]
-    for i in op:
-        for val in i:
-            for i,v in val.iterrows():
+    for stock in watchlist:
+        df = getDataFromDB(stock.upper())
+        if df.empty:
+            pass
+        resultsdf = doAnalysis(df,['rsi','macd','stoch'])
+        for rdf in resultsdf:
+            for i,v in rdf.iterrows():
                 if v['date'] == str(tdate):
-                    z = v.to_list()
                     y = []
+                    z = v.to_list()
                     if v['adv'] == "BUY":
                         for j in z:
                             fj = "\033[0;93m {0} \033[0m".format(j)
@@ -28,9 +33,14 @@ def printTable(op):
                     # data.append(v.to_list())
                     data.append(y)
     table = AsciiTable(data)
+    table.title = "Buy - Sell Suggestion"
     print(table.table)
 
-printTable(op)
+
+
+
+watchlist = ['sbin','ongc','reliance','rblbank']
+printTable(AUTOMOBILE)
 
 
 

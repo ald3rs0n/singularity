@@ -16,15 +16,15 @@
 
 ## TODO:
     Multipage application
-    Database connection
-    ML application
+    Database connection -- Done
+    ML application -- How to introduce??
 
 ###
     getdata.py -- will handle getting data from nse site
         ||
     analysis.py -- wil do all the analysis and send data for rendering,and saves in csv/json file
         ||                                                                            ||
-    layout.py -- will handle rendering layout all the Dash thing           terminal.py -- will print to terminal
+    layout.py -- will handle rendering layout all the Dash thing          terminal.py -- will print to terminal
         ||
     app.py -- will render the dash app
 ###
@@ -37,17 +37,13 @@
     make rendering data for layout.py
     have to change basic functions of this file and redesign it. analyze function will analyze only one function,and return it. That will reduce unnecessary complexity of the porgram. To analyze all the stocks make different function. --  Done
     doing analysis on all the dataframes and returing a list of dataframes
-    todo:
-        passing function as function argument ?
-        Do all analysis on less data to improve speed
+    Do all analysis on less data to improve speed -- done by introducing watchlist
 
 # index.py
     for now ready to use...good to go
     takes input from user and do callback according to the input
     @app.callback have to shift to layout file -- done
-    todo:
-        filtering user input and showing suggestions
-        taking start_date and end_date argument from IU for SAT and VT functions
+        
 
 
 # app.py
@@ -60,6 +56,7 @@
             |->page1.py
             |->page2.py
         static/
+            |->watchlist.py
         backend/
             |--getdata.py
             |--analysis.py
@@ -69,6 +66,8 @@
             |--readme.md
             |--lisence
             |--plan.md
+        table.py
+        analysistest.py
 
 # layout.py
     navbar is rendering from layout file
@@ -79,38 +78,25 @@
     colors of figure and legends -- done
     plot buy sell data point on candlestick graph  -- done
 
-    todo:
-        add list of functions to apply on data -- doing
-        add color band to bollinger bands 
-        Date silder ?
-        improve search functionality,suggest options
-        show names fo stocks from stock list
-
 
 # table.py
     Rendering table of all the stocks buy/sell recomendation data
-    todo:
-        adding watchlist
-        make faster by reducing calculation
+    adding watchlist -- done
 
-
-# main.py
+# dividend.py
     gets data from nse site
     looks for upcoming dividend
     stores data in a file with dividend > 2
     gives terminal output of the data
-    todo:
-        redesign it to send output to terminal,file and app
 
 # test.py
     for testing purpose
 
-# getdata.py
+# getstockdata.py
     gets data from nse site and stores in a list of dataframe
     creates a output .csv file
     decide return type - list of dataframe
     online functionality of getData function to be tasted - still not working for app -- fixed temporarily
-    todo:
     coclusion:
         Ready for use at this point
 
@@ -120,14 +106,8 @@
     analyze MACD -- done
     variables of all analysis functions are set to a dictionary
     return type of buy and sell signal -- dataframe
-    todo:
-        add more indiactors
-        add pattern
-        customizing all the plots
-        adding more types of indicators
-        adding chart pattern
-        find highly flactuating stocks (flactuation > 20%)
-        ploting macdhist
+    Add volume in chart -- Done
+    Add line chart for stock -- Done
     conclusion:
         for now it is fully ready to use
 
@@ -135,13 +115,15 @@
     serving data from mongo database
     save data has to be modified to add updated data
     prevent adding duplicate data
-    todo:
-        add a database to add analyzed data ?? 
-        _id: should be the date column
 
 
 # tiralAndError.py
     for testing purpose
+
+
+# connector.py
+    serving connection between database and data collected from nse site
+
 
 
 

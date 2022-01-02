@@ -1,20 +1,24 @@
 import pymongo
 import pandas as pd
-# from getdata import getData
-from time import sleep
-from datetime import date
+from datetime import date,datetime
 from random import randint
 import os
+from backend.getstockdata import getDataFromNse
 
 DBURL = "mongodb://127.0.0.1:27017/"
 client = pymongo.MongoClient(DBURL)
 singularitydb = client['singularity']
 
-def getDataFromDB(collection_name):
+
+
+# Returns a dataframe from db providing name of the stock
+def getDataFromDB(stock):
+    collection_name = stock.upper()
     data_collection = singularitydb[collection_name]
     query = {"Close" : {"$gt" : 520}}
     # y = data_collection.find(query) ## when query is passed returning empty in app,have to investigate
-    y = data_collection.find()
+    y = data_collection.find().sort("Date",1)
+    # y = data_collection.find()
     df = pd.DataFrame(y)
     if not df.empty:
         df.drop('_id',inplace=True,axis='columns')
@@ -24,20 +28,21 @@ def getDataFromDB(collection_name):
     # dff = pd.read_csv('analyzed/file.csv')
 
 
-# Dangerous function, Calling it in application multiple times will create multiple copies of data
-def saveDataToDB(df):
-    # collection_name = (df[['Symbol']])[0]
-    # collection_name = 'SBIN'
-    # data_collection = singularitydb[collection_name]
-    # data_collection = db_name[collection_name]
-    # data_collection.insert_many(df.to_dict('records'))
-    df.to_csv('f.csv')
-    print(pd.read_csv('f.csv'))
-    # dff = { "Date" : str((df.index.values))}
-    # print(dff)
+# takes list of names of stocks and updates the whole database
+def updateDB(watchlist,start_date):
+    # start_date = date(2021,6,20)
+    end_date = datetime.date(datetime.now())
+    for stock in watchlist:
+        try:
+            df_raw = getDataFromNse(stock,start_date,end_date)
+            updateCollection(df_raw)
+            print("Updated "+stock)
+        except Exception as e:
+            print("Failed to update DB!")
+            return
 
 
-
+# updates a collection in database. 
 def updateCollection(df_raw):
     r = str(randint(500,10000))
 

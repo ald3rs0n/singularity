@@ -35,3 +35,22 @@ def on_form_change(radio_items_value, checklist_value, switches_value):
         "es" if n_switches != 1 else "",
     )
     return output_string
+
+
+    stocklist = dcc.Dropdown(
+        id='demo-dropdown',
+        options=[
+            {'label': 'New York City', 'value': 'NYC'},
+            {'label': 'Montreal', 'value': 'MTL'},
+            {'label': 'San Francisco', 'value': 'SF'}
+        ],
+        value=''
+    )
+
+@app.callback(
+    Output('dd-output-container', 'children'),
+    Input('demo-dropdown', 'value')
+)
+def update_output(value):
+    return 'You have selected "{}"'.format(value)
+ 
