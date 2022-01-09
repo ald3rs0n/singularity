@@ -1,7 +1,7 @@
 from datetime import date,datetime
-from backend.analysis import doAnalysis
+from Backend.analysis import doAnalysis
 from terminaltables import AsciiTable
-from backend.dbconnect import getDataFromDB, updateDB
+from Backend.dbconnect import getDataFromDB, updateDB
 # from dbconnect import getDataFromDB
 from static.watchlist import *
 

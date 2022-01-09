@@ -1,24 +1,4 @@
 
-
-1. Get data from NSE site.
-    from 1. NSEpy lib         2. NSEtools lib
-
-2. Generate plot and get buy and sell signal
-    to plot:        plotly
-    to visualize:   dash
-    visualization and alalysis tools -> tools.py
-
-3. Save output to database
-    saving in mongo singularity database
-
-4. Apply machine learning to the data to predict future result
-    Not sure how to do this
-
-## TODO:
-    Multipage application
-    Database connection -- Done
-    ML application -- How to introduce??
-
 ###
     getdata.py -- will handle getting data from nse site
         ||
@@ -29,7 +9,7 @@
     app.py -- will render the dash app
 ###
 
-
+nsepy -> getstockdata -> dbconnect -> settings
 
 # analysis.py
     doing all the analysis and returning a list of buy/sell advice
@@ -62,6 +42,7 @@
             |--analysis.py
             |--tools.py
             |--dbconnect.py
+            |--connector.py
         info/
             |--readme.md
             |--lisence
@@ -127,7 +108,7 @@
 
 
 
-##
+## Problems
     NOTE: after extensive research can not understand why dataframe directly from site is not working whereas from csv file it is fine. Now going with file,but have to address it later.Same problem happening to the dataframe from database,normally dataframe is working but if it is passed with a quary then it is getting a empty dataframe,that is not rendering.
         Thoughts:
             Normally calling dbconnect.py returning dataframe but not with dash,may be it is interfearing with this process

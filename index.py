@@ -1,35 +1,40 @@
 #!/usr/bin/python3
-from layout import *
-from app import app
-from backend.settings import IP,PORT
+from app import *
+from Backend.settings import IP,PORT
+from layoutComponents.plotgraph import *
+from layoutComponents.homeNavBar import *
+from layoutComponents.dccstore import *
+import pages.trial as trial
+import pages.home as home
+import pages.dashboard as dashbd
 
-#Initial layout setting
-df = getData('sbin')
-fig = makeGraph(df,['macd'],True)
-content = offcanvascontent('BANKS',['macd'])
-navbar = navLayout(content)
-graph = dcc.Graph(figure=fig,id='output')
+def serve_layout():
+    slayout = html.Div([
+        dcc.Location(id='url', refresh=False),
+        html.Div(id='page-content'),
+    ])
+    return slayout
 
+app.layout = serve_layout
 
-index_layout = html.Div(children=[navbar,graph])
+app.validation_layout = html.Div([
+    app.layout,
+    trial.layout,
+    home.layout,
+    dashbd.layout])
 
-
-app.layout = html.Div([
-    dcc.Location(id='url', refresh=False),
-    html.Div(index_layout,id='page-content')
-])
-
-# @app.callback(Output('page-content', 'children'),
-#               Input('url', 'pathname'),
-#               )
-# def display_page(pathname):
-#     if pathname == '/':
-#         return app.layout
-#     elif pathname == '/apps/app2':
-#         pass
-#         # return app2.layout
-#     else:
-#         return '404'
+@app.callback(Output('page-content', 'children'),
+              Input('url', 'pathname'),
+              )
+def display_page(pathname):
+    if pathname == '/':
+        return home.layout
+    elif pathname == '/dashboard':
+        return dashbd.layout
+    elif pathname == '/trial':
+        return trial.layout
+    else:
+        return 404
 
 
 

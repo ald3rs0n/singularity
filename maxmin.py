@@ -1,5 +1,5 @@
 from scipy.signal import find_peaks
-from backend.dbconnect import getDataFromDB
+from Backend.dbconnect import getDataFromDB
 import matplotlib.pyplot as plt
 
 df = getDataFromDB('idea')

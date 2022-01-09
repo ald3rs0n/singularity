@@ -1,5 +1,5 @@
-from backend.tools import StockAnalysisTools as SAT
-from backend.dbconnect import getDataFromDB
+from Backend.tools import StockAnalysisTools as SAT
+from Backend.dbconnect import getDataFromDB
 from terminaltables import AsciiTable
 from static.watchlist import *
 
