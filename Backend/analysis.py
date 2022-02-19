@@ -21,8 +21,11 @@ def doAnalysis(df,args):
                 macd = sat.analyzeMACD(P_MACD)
             else:
                 print("Invalid Operation : "+arg+"\r\n")
+        rsi.drop_duplicates(inplace=True)
         rsi.reset_index(drop=True,inplace=True)
+        macd.drop_duplicates(inplace=True)
         macd.reset_index(drop=True,inplace=True)
+        sto.drop_duplicates(inplace=True)
         sto.reset_index(drop=True,inplace=True)
         new_df = pd.concat((rsi.iloc[0:5],macd.iloc[0:5],sto.iloc[0:5]),axis=0)
         if not new_df.empty :

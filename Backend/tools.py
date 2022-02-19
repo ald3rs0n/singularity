@@ -291,10 +291,7 @@ class Utils():
     def dateCalc():
         nw = datetime.now()
         delta = datetime(year=nw.year,month=nw.month,day=nw.day ,hour=18,minute=00,second=00) -datetime(nw.year,nw.month,nw.day,nw.hour,nw.minute,nw.second)
-        if delta > timedelta(0): #from night 12am to evening 6pm,no close data available
-            dt = datetime.date(datetime.now()) - timedelta(days=1)
-            return dt
-        elif nw.weekday() == 5: #saturday
+        if nw.weekday() == 5: #saturday
             dt = datetime.date(datetime.now()) - timedelta(days=1)
             return dt
         elif nw.weekday() == 6: #sunday
@@ -302,6 +299,9 @@ class Utils():
             return dt
         elif nw.weekday() == 0 and delta > timedelta(0): #monday night after 12am
             dt = datetime.date(datetime.now()) - timedelta(days=3)
+            return dt
+        elif delta > timedelta(0): #from night 12am to evening 6pm,no close data available
+            dt = datetime.date(datetime.now()) - timedelta(days=1)
             return dt
         else:
             dt = datetime.date(datetime.now())
