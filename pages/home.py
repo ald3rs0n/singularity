@@ -1,29 +1,43 @@
 from app import *
-from dash import html,dcc,Output,Input,State
-import pandas as pd
+from dash import html,dcc
 from Backend.connector import getData
-from layoutComponents.analysistable import generateHTMLTable,makeModal
+from layoutComponents.homeanalysistab import generateHTMLTable, generateOverviewTab,makeModal
 from Backend.settings import BOOL
-from layoutComponents.plotgraph import *
+from layoutComponents.homeplotgraph import *
 from layoutComponents.homeNavBar import *
-from layoutComponents.dccstore import *
-# from validation import *
+
+
+
+config = {
+    # "displayModeBar": False,
+    # "showTips": False,
+    "responsive":True,
+    "displaylogo":False,
+    "modeBarButtonsToRemove": ['zoomIn2d','autoScale2d','lasso2d','resetScale2d','zoomOut2d'],
+    "modeBarButtonsToAdd":['drawline','drawopenpath','drawclosedpath','drawcircle','drawrect','eraseshape'],
+    }
+
+
+
+
 
 #Initial layout setting
-df = getData('sbin',BOOL)
-fig = makeGraph(df,['macd'],True)
+stock = 'sbin'
+df = getData(stock)
+fig = makeGraph(df,['sma'],True)
 
-content = offcanvascontent('',[],on=BOOL)
+content = offcanvascontent('',[],[])
 dfs = doAnalysis(df,['macd','rsi','stoch'])
-table = generateHTMLTable(dfs)
-modal = makeModal(table)
+table,modalHeader = generateHTMLTable(dfs)
+overview = generateOverviewTab(stock)
+modal = makeModal(table,modalHeader,overview)
 navbar = navLayout(content,modal)
-graph = dcc.Graph(figure=fig,id='output')
+graph = dcc.Graph(figure=fig,id='output',config=config)
 
 
 layout = html.Div(children=[
+                    # storeData,
                     navbar,
                     graph,
-                    storeData,
-                    dcc.Link('Go to Index', href='/trial')
+                    dcc.Link('Go to Trial', href='/trial')
                     ])

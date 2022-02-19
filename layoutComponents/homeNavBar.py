@@ -1,50 +1,62 @@
-from dash.exceptions import PreventUpdate
-import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
-from dash import html,dcc
+import pandas as pd
 import dash_daq as daq
-from datetime import timedelta
+from dash import html,dcc
+from datetime import timedelta,datetime
+import  dash_bootstrap_components as dbc
+from dash.exceptions import PreventUpdate
+from dash.dependencies import Input,Output,State
 
 from app import app
-from Backend.dbconnect import getDataFromDB,getWatchlist
 from Backend.connector import getData
-from Backend.settings import TODAY,WEEK,WATCHLISTPERIOD,BOOL
 from Backend.analysis import doAnalysis
 from layoutComponents.makeComponents import *
+from Backend.settings import QUARTER, TODAY,WEEK,WATCHLISTPERIOD
+from Backend.dbconnect import getWatchlist,getDataFromDB
 
 
-def makeCards(watchlist,args,on):
+def makeCards(watchlist,args,adv):
     if watchlist and args:
         wlist,_id = getWatchlist(watchlist)      
         cards = []
         for stockname in wlist:
-            if on:
-                df = getData(stockname,WEEK)
+            dt_quarter = datetime.date(datetime.now()) - QUARTER
+            query_quarter = {"Date" : {"$gt" : str(dt_quarter)}}
+            # df = getDataFromDB(stockname,query_quarter)
+            df = getData(stockname)
+            val = doAnalysis(df,args)
+            if not val is None:
+                if len(adv) == 1:
+                    if adv[0] == "BUY":
+                        val.query("adv == 'BUY'",inplace=True)
+                    elif adv[0] == "SELL":
+                        val.query("adv == 'SELL'",inplace=True)
+                elif len(adv) == 0:
+                    val = pd.DataFrame()
             else:
-                df = getDataFromDB(stockname)
-            vals = doAnalysis(df,args)
-            for val in vals:
-                for i,v in val.iterrows():
-                     for j in range(WATCHLISTPERIOD) : 
-                        if v['date'] == str(TODAY - timedelta(days=j)):
-                            x = "Date : {0}\tPrice : {1} || {2}\r\n".format(v['date'],v['price'],v['ind'])
-                            if v['adv'] == "SELL":
-                                style = {'color' : 'cyan'}
-                            elif v['adv'] == "BUY":
-                                style = {'color' : 'orange'}
-                            title = v['adv']+' : '+v['symbol']
-                            card = dbc.Card([
-                                dbc.CardBody([
-                                    html.H5(title,className="card-title"),
-                                    html.P(x,className="card-text"),
-                                ])
-                            ],style=style)
-                            cards.append(card)
+                val = pd.DataFrame()
+
+                # print(val)
+            for i,v in val.iterrows():
+                for j in range(WATCHLISTPERIOD) : 
+                    if v['date'] == str(TODAY - timedelta(days=j)):
+                        x = "Date : {0}\tPrice : {1} || {2}\r\n".format(v['date'],v['price'],v['ind'])
+                        if v['adv'] == "SELL":
+                            style = {'color' : 'cyan'}
+                        elif v['adv'] == "BUY":
+                            style = {'color' : 'orange'}
+                        title = v['adv']+' : '+v['symbol']
+                        card = dbc.Card([
+                            dbc.CardBody([
+                                html.H5(title,className="card-title"),
+                                html.P(x,className="card-text"),
+                            ])
+                        ],style=style)
+                        cards.append(card)
         return cards
     
-def offcanvascontent(stockname,args,on=True):
+def offcanvascontent(stockname,args,adv):
     
-    cards = makeCards(stockname,args,on)       
+    cards = makeCards(stockname,args,adv)       
     return html.Div(cards,id="output2"),
 
 def navLayout(content,modal):
@@ -63,17 +75,16 @@ def navLayout(content,modal):
             html.Br(),
             dbc.Checklist(
                 options=[
-                    # {"label": "STOCK", "value": 'Mountain'},
                     {"label": "MACD", "value": 'macd'},
                     {"label": "RSI", "value": 'rsi'},
-                    # {"label": "STOCH", "value": 'stoch', "disabled": True},
                     {"label": "STOCH", "value": 'stoch'},
                     {"label": "Bollinger Band", "value": 'bb',"disabled": True},
                     {"label": "SMA", "value": 'sma'},
                     {"label": "EMA", "value": 'ema'},
                     {"label": "Volume", "value": 'VOL'},
+                    {"label": "CROSS", "value": 'cross'},
                 ],
-                value=['macd'],
+                value=['sma'],
                 inline=True,
                 id="switches-input",
                 switch=True,
@@ -109,8 +120,31 @@ def navLayout(content,modal):
                 n_clicks=0,
             ),color='light'),
             dbc.Offcanvas(html.Div([
-                html.Div(makeWatchlist('home_watchlist'),id='wlist-container'),
-                html.Div(content)]),
+                    dbc.Checklist(
+                        options=[
+                            {"label": "MACD", "value": 'macd'},
+                            {"label": "RSI", "value": 'rsi'},
+                            {"label": "STOCH", "value": 'stoch'},
+                        ],
+                        value=[],
+                        inline=True,
+                        id="analysis-switches-input",
+                        switch=True,
+                    ),
+                    dbc.Checklist(
+                        options=[
+                            {"label": "BUY", "value": 'BUY'},
+                            {"label": "SELL", "value": 'SELL'},
+                        ],
+                        value=[],
+                        # value=['BUY','SELL'],
+                        inline=True,
+                        id="analysis-switches-buy-sell",
+                        switch=True,
+                    ),
+                    html.Div(makeWatchlist('home_watchlist'),id='wlist-container'),
+                    html.Div(content)
+                ]),
                 id="offcanvas-scrollable2",
                 scrollable=True,
                 title="Buy ~ Sell",
@@ -172,14 +206,15 @@ def toggle_offcanvas_scrollable2(n1, is_open):
 @app.callback(
     Output("output2","children"),
     Input("home_watchlist","value"),
-    Input("switches-input", "value"),
+    Input("analysis-switches-input", "value"),
+    Input("analysis-switches-buy-sell", "value"),
     prevent_initial_call=True
 )
-def select_output(sel,sw):
+def select_output(sel,sw,adv):
     # pass
     if sel is None or sw is None:
         raise PreventUpdate
-    content = offcanvascontent(sel,sw,on=BOOL)
+    content = offcanvascontent(sel,sw,adv)
     return content
 
 

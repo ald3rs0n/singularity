@@ -1,40 +1,13 @@
-import dash
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 from dash import html,dcc
 
 from app import app
-from Backend.dbconnect import *
-from Backend.settings import TODAY,WEEK,WATCHLISTPERIOD
-from layoutComponents.makeComponents import *
-from layoutComponents.watchlistModal import *
-
-
-edit_watchlist_modal = makeWatchlistModal(" ")
-
-settings = html.Div(
-        [
-            dbc.Button(
-                "Settings",
-                id="open-tools-canvas",
-                n_clicks=0,
-                color='light'
-            ),
-            dbc.Offcanvas(
-                html.Div([
-                    dbc.Row([
-                        dbc.Col(edit_watchlist_modal),
-                    ])
-                ]),
-                id="tools-canvas",
-                scrollable=True,
-                title="Settings",
-                is_open=False,
-                placement="start"
-            ),
-        ]
-    ) 
+from layoutComponents.dashbdwlModal import *
+from layoutComponents.dashbdPortfolio import portfolio
+from layoutComponents.dashbdSettingsRow import dashbdSettings
+from layoutComponents.dashbdAnalysisRow import dashbdAnalysis
 
 
 
@@ -49,7 +22,7 @@ def dashbdNavLayout():
                 id="open-analysis-canvas",
                 n_clicks=0,
             ),color='light'),
-            dbc.Offcanvas(html.Div(),
+            dbc.Offcanvas(html.Div(dashbdAnalysis()),
                 id="analysis-canvas",
                 scrollable=True,
                 title="Buy ~ Sell",
@@ -66,7 +39,7 @@ def dashbdNavLayout():
     navbar = dbc.Navbar(
         dbc.Container(
             [
-                dbc.Col(dbc.NavItem(settings)),
+                dbc.Col(dbc.NavItem(dashbdSettings()),width={"size": 1, "order": "first"}),
                 dbc.Col(dbc.NavItem(home)),
                 # dbc.Col(dbc.NavItem()), 
                 dbc.Col(dbc.NavbarToggler(id="navbar-toggler", n_clicks=0)),
@@ -94,14 +67,12 @@ def dashbdBodyLayout():
                 width={'size':3,'order':"last",'offset':9}
             )
         ]),
-        dbc.Row([
-            dbc.Col(
-                html.Div(id='watchlist'),
-                width={'size':3,'order':"last",'offset':9}
-            )
-        ])
+        dbc.Row(portfolio())
     ],fluid=True)
     return dashboardBody
+
+
+
 
 
 @app.callback(

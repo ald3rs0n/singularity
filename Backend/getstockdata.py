@@ -13,11 +13,23 @@ def NseStocks():
         print("no internet")
 
 
-# returns dataframe of stocks. If offline then from file,if online then from nse site
+# returns dataframe of stocks
 def getDataFromNse(stock,start_date,end_date):
     if IP != '127.0.0.1':
         df = get_history(stock.upper(),start_date,end_date)
-        print("Got data of "+ stock.upper() + " from server...")
+        # print("Got data of "+ stock.upper() + " from server...")
+        return df 
+    else:
+        print("No internet connection...!")   
+        return
+
+
+
+# returns dataframe of stocks where series=BE
+def getDataNseBE(stock,start_date,end_date):
+    if IP != '127.0.0.1':
+        df = get_history(stock.upper(),start_date,end_date,series='BE')
+        # print("Got BE data of "+ stock.upper() + " from server...")
         return df 
     else:
         print("No internet connection...!")   

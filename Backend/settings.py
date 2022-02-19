@@ -5,11 +5,14 @@ import dash_daq as daq
 import pandas as pd
 
 # Determines time period for showing buy sell suggestion on a watchlist
-WATCHLISTPERIOD = 20
+WATCHLISTPERIOD = 2
 
 
 #A constant to determine to give a call to nse site or not
 BOOL = False
+BOOL_STOCK = False
+BOOL_WATCHLIST = False
+BOOL_PORTFOLIO = False
 
 
 
@@ -43,7 +46,7 @@ WEEK = timedelta(days=7)
 MONTH = timedelta(days=30)
 QUARTER = timedelta(days=90)
 HALFYEAR = timedelta(days=180)
-YEAR = timedelta(days=365)
+YEAR = timedelta(days=364)
 TWOYEARS = timedelta(days=730)
 FIVEYEARS = timedelta(days=1826)
 

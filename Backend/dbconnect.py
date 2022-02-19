@@ -1,33 +1,35 @@
-from re import S
+from datetime import datetime,date
+from matplotlib.collections import Collection
 import pymongo
 import pandas as pd
-from datetime import date,datetime
 from random import randint
 import os
 
-from Backend.getstockdata import getDataFromNse,NseStocks
+from Backend.getstockdata import getDataFromNse,NseStocks, getDataNseBE
 from Backend.settings import TODAY
 
 DBURL = "mongodb://127.0.0.1:27017/"
 client = pymongo.MongoClient(DBURL)
 singularitydb = client['singularity']
 
+
+
+
 # Returns a dataframe from db providing name of the stock
-def getDataFromDB(stock):
+def getDataFromDB(stock,query={}):
     collection_name = stock.upper()
     data_collection = singularitydb[collection_name]
-    # query = {"Close" : {"$gt" : 4}}
-    # y = data_collection.find(query) ## when query is passed returning empty in app,have to investigate
-    y = data_collection.find().sort("Date",1)
-    # y = data_collection.find()
+    # query = {"Close" : {"$gt" : 140}}
+    # query = {"Date" : {"$gt" : str(date(2021,9,15))}}
+    if query is None:
+        y = data_collection.find().sort("Date",1)
+    else:
+        y = data_collection.find(query).sort("Date",1)
     df = pd.DataFrame(y)
     if not df.empty:
         df.drop('_id',inplace=True,axis='columns')
         return df
     
-    # df.to_csv('analyzed/file.csv')
-    # dff = pd.read_csv('analyzed/file.csv')
-
 
 # takes list of names of stocks and updates the whole database
 def updateDB(watchlist,start_date):
@@ -37,6 +39,10 @@ def updateDB(watchlist,start_date):
         try:
             df_raw = getDataFromNse(stock,start_date,end_date)
             updateCollection(df_raw)
+            raw_df_BE = getDataNseBE(stock,start_date,end_date)
+            if not raw_df_BE is None:
+                updateCollection(raw_df_BE)
+                # print("Updated BE data of "+stock)
             print("Updated "+stock)
         except Exception as e:
             print("Failed to update DB!",e)
@@ -90,6 +96,21 @@ def updateStockList():
             data = {'SYMBOL': symbol, 'NAME OF COMPANY': df_dict[symbol]}
             data_collection.insert_one(data)
             return ("Data inserted to db...Successfully! "+df_dict[symbol])
+
+
+#unction to get name of a stock from its symbol
+def getStockname(symbol):
+    """
+        It takes stock symbol as a arguement and returs name of the stock from database
+        return type : string
+    """
+    col_name =  singularitydb['NSE_stocks_list']
+    y = col_name.find_one({"SYMBOL":symbol})
+    name =  y['NAME OF COMPANY']
+    name = name.replace("Limited","")
+    # if len(name) > 20:
+    #     name = name[0:20]+"..."
+    return name
 
 
 
@@ -176,3 +197,96 @@ def deleteCollection(stock):
     data_collection = singularitydb[collection_name]
     data_collection.drop()
     print(collection_name+" deleted from db...Successfully!")
+
+
+
+
+def getNamesFromPortfolio():
+    """
+     This database function returns names of stocks present in portfolio in the order of investment amount
+    """
+    collection_db = singularitydb['portfolio']
+    q = [
+            {"$project": { "stock": 1, "investment": {"$multiply": [ "$buy_price", "$quantity" ]}}},
+            {"$sort":{"investment":-1}}
+        ]
+    pf = list(collection_db.aggregate(q))
+    stocks = []
+    for stock in pf:
+        stocks.append(stock['stock'])
+    return stocks
+
+
+
+def getPortfiloData(stock):
+    collection_db = singularitydb['portfolio']
+    quary = {'stock':stock}
+    z = collection_db.find_one(quary)
+    return z
+
+
+def updatePortfolioData(action,stock,date,price,quantity,target=0,indicator=None,stoploss=0):
+    collection_db = singularitydb['portfolio']
+    history = singularitydb['transactions']
+    h_quary = {
+                'date':date,
+                'stock':stock,
+                'price':price,
+                'quantity':quantity,
+                'target':target,
+                'indicator':indicator,
+                'stoploss':stoploss,
+                'action':action}
+    q = {'stock':stock}
+    z = collection_db.find_one(q)
+
+    if action == "BUY":
+        if not z:
+            quary = {
+                'stock':stock,
+                'date':date,
+                'buy_price':price,
+                'quantity':quantity,
+                'target':target,
+                'indicator':indicator,
+                'stoploss':stoploss}
+            collection_db.insert_one(quary)
+            history.insert_one(h_quary)
+            print(collection_db.find_one({"stock":stock}))
+        else:
+            id = z['_id']
+            total_quantity = z['quantity']+quantity
+            new_buy_price = round(((z['buy_price']*z['quantity'])+(price*quantity))/total_quantity,2)
+            u_quary = {
+                'buy_price':new_buy_price,
+                'quantity':total_quantity,
+                'target':target,
+                'indicator':indicator,
+                'stoploss':stoploss}
+            collection_db.update_one({"_id":id},{"$set":u_quary})
+            history.insert_one(h_quary)
+            print(collection_db.find_one({"stock":stock}))
+    elif action == "SELL" and z:
+        id = z['_id']
+        if z['quantity'] > quantity:
+            u_quary = {
+                "$inc":{"quantity":-quantity}
+            }
+            collection_db.update_one({"_id":id},u_quary)
+            history.insert_one(h_quary)
+            print(collection_db.find_one({"stock":stock}))
+        elif z['quantity'] == quantity:
+            collection_db.delete_one({"_id":id})
+            history.insert_one(h_quary)
+        else:
+            return
+
+
+
+
+
+
+
+
+
+

@@ -1,12 +1,12 @@
-from datetime import datetime,date
+from ast import operator
+from datetime import datetime,date,timedelta
+from math import floor
 import pandas as pd
+from sqlalchemy import outparam
 from talib import * # Technical analysis library
 import plotly.graph_objects as go
 
-from Backend.dbconnect import getDataFromDB
-
-
-# df = pd.read_csv('static/IOCL.csv')
+# Avoid any import from any other module from this app to aviod circular import.
 
 
 class StockAnalysisTools():
@@ -33,16 +33,13 @@ class StockAnalysisTools():
                 output['RSI'].append(row['RSI'])
                 output['price'].append(row['price'])
                 output['adv'].append("SELL")
-                # sell.append("{3} Sell @ {2} on {1} ; RSI:{0} \r\n".format(row['RSI'],row['date'],row['price'],self.symbol))
             elif row['RSI'] <= pRSI['sell'] :
                 output['date'].append(row['date'])
                 output['symbol'].append(self.symbol)
                 output['RSI'].append(row['RSI'])
                 output['price'].append(row['price'])
                 output['adv'].append("BUY")
-                # buy.append("Buy @ {2} on {1} ; RSI:{0} \r\n".format(row['RSI'],row['date'],row['price']))
         return (pd.DataFrame(output).iloc[::-1])
-        # return (pd.DataFrame(output))
 
     # Does Stochstic buy and sell analysis and returns a pandas dataframe
     def analyzeStochastics(self,pSTO={'buy':20,'sell':80,'fastkp':5, 'slowkp':3, 'slowkm':0, 'slowdp':3, 'slowdm':0}):
@@ -73,7 +70,6 @@ class StockAnalysisTools():
                  output['adv'].append("BUY")
                 # buy.append("Date: {0},price: {1} buy ,stochastic \r\n".format(row['date'],row['price']))
         return (pd.DataFrame(output).iloc[::-1])
-        # return (pd.DataFrame(output))
 
     # Does MACD buy and sell analysis and returns a pandas dataframe
     def analyzeMACD(self,pMACD={'price':'close','fp':12,'sp':26,'slp':9}):
@@ -87,14 +83,11 @@ class StockAnalysisTools():
             'price' : df['Close']
         }
         dff = pd.DataFrame(data)
-        # dff.dropna(inplace=True) ##it is not working as sometimes i+1 is not avaliable
         output = {'date' : [],'symbol':[],'ind' : 'MACD','MACD' : [],'price' : [],'adv' : []}
         for i,v in dff.iterrows():
             if (i+1) < len(dff):
                 #1. bullish signal as macd and signal line goes negative to positive,this is a buy signal.
                 if dff.at[i,'macd'] > 0 and dff.at[i,'macdsignal'] > 0 and dff.at[(i-1),'macdsignal'] < 0:
-                    # print(i,dff.at[i,'macd'],dff.at[i,'macdsignal'],dff.at[i,'date'])
-                    # pass
                     output['date'].append(dff.at[i,'date'])
                     output['symbol'].append(self.symbol)
                     output['MACD'].append(dff.at[i,'macdsignal'])
@@ -103,9 +96,6 @@ class StockAnalysisTools():
 
                 #2. buy signal if macd line crosses the signal line from below
                 elif dff.at[i,'macd'] < dff.at[i,'macdsignal'] and dff.at[(i+1),'macd'] > dff.at[(i+1),'macdsignal']:
-                    # print(i,dff.at[i,'macd'],dff.at[i,'macdsignal'],dff.at[i,'date'])
-                    # print((i+1),dff.at[(i+1),'macd'],dff.at[(i+1),'macdsignal'],dff.at[(i+1),'date'])
-                    # pass
                     output['date'].append(dff.at[(i+1),'date'])
                     output['symbol'].append(self.symbol)
                     output['MACD'].append(dff.at[(i+1),'macdsignal'])
@@ -114,8 +104,6 @@ class StockAnalysisTools():
                 
                 #3. bearish signal as macd and signal line goes positive to negative,this is a sell signal.
                 elif dff.at[i,'macd'] < 0 and dff.at[i,'macdsignal'] > 0 and dff.at[(i+1),'macdsignal'] < 0:
-                    # print(i,dff.at[i,'macd'],dff.at[i,'macdsignal'],dff.at[i,'date'])
-                    # pass
                     output['date'].append(dff.at[(i+1),'date'])
                     output['symbol'].append(self.symbol)
                     output['MACD'].append(dff.at[(i+1),'macdsignal'])
@@ -124,16 +112,55 @@ class StockAnalysisTools():
 
                 #4. sell signal if macd line crosses the signal line from above
                 elif dff.at[i,'macd'] > dff.at[i,'macdsignal'] and dff.at[(i+1),'macd'] < dff.at[(i+1),'macdsignal']:
-                    # print(i,dff.at[i,'macd'],dff.at[i,'macdsignal'],dff.at[i,'date'])
-                    # print((i+1),dff.at[(i+1),'macd'],dff.at[(i+1),'macdsignal'],dff.at[(i+1),'date'])
                     output['date'].append(dff.at[(i+1),'date'])
                     output['symbol'].append(self.symbol)
                     output['MACD'].append(dff.at[(i+1),'macdsignal'])
                     output['price'].append(dff.at[(i+1),'price'])
                     output['adv'].append("SELL")
         return(pd.DataFrame(output).iloc[::-1])
-        # return(pd.DataFrame(output))
-                
+
+    #Does analysis on simple moving average and returns its slope                
+    def analyzeSMA(self,pMA={'time':20,'price':'close','type':'SMA','name':'SMA'}):
+        df = self.df
+        sma = SMA(df[pMA['price'].capitalize()], timeperiod=pMA['time'])
+        output = LINEARREG_SLOPE(sma,timeperiod=2)
+        return(output.iloc[::-1])
+
+    #Does analysis on short term moving average and long term moving average and finds death or golden cross
+    def analyzeCross(self,short=50,long=200):
+        """
+            function to locate death cross and golden cross
+            short term moving average is short = 50 default
+            long term moving average is long = 200 default
+        """
+        df = self.df
+        sma_short = SMA(df['Close'], timeperiod=short)
+        sma_long = SMA(df['Close'], timeperiod=long)
+        data = {
+            'date' : df['Date'],
+            'short' : round(sma_short,2),
+            'long' : round(sma_long,2),
+            'price' : df['Close']
+        }
+        dff = pd.DataFrame(data)
+        output = {'date' : [],'symbol':[],'price' : [],'adv' : []}
+        for i,v in dff.iterrows():
+            if (i+1) < len(dff):
+                if dff.at[i,'short'] > dff.at[i,'long'] and dff.at[(i+1),'short'] < dff.at[(i+1),'long']:
+                    output['date'].append(dff.at[(i+1),'date'])
+                    output['symbol'].append(self.symbol)
+                    output['price'].append(dff.at[(i+1),'price'])
+                    output['adv'].append("Death Cross")
+                elif dff.at[i,'short'] < dff.at[i,'long'] and dff.at[(i+1),'short'] > dff.at[(i+1),'long']:
+                    output['date'].append(dff.at[(i+1),'date'])
+                    output['symbol'].append(self.symbol)
+                    output['price'].append(dff.at[(i+1),'price'])
+                    output['adv'].append("Golden Cross")
+
+        return (pd.DataFrame(output).iloc[::-1])
+
+
+
 
 
 class VisualizationTools():
@@ -197,7 +224,7 @@ class VisualizationTools():
         return fo,fp
 
     # This function plots SMA or EMA chart along with candlestick chart of the stock
-    def plotMA(self,pMA={'time':20,'price':'open','type':'SMA','name':'SMA'}):
+    def plotMA(self,pMA={'time':20,'price':'close','type':'SMA','name':'SMA'}):
         df = self.df
         if pMA['type'] == 'SMA':
             output = SMA(df[pMA['price'].capitalize()], timeperiod=pMA['time'])
@@ -234,17 +261,97 @@ class VisualizationTools():
 
 
 
-class Utilis():
+class Utils():
     def __init__(self):
         # self.stock = stock
         pass
 
-    def dailyPercentageChangeCalc(self,stock):
-        df = getDataFromDB(stock)
+    def dailyPercentageChangeCalc(self,df):
         x = (df.iloc[-1:-2:-1].get(["Date","Close","Prev Close"]).values[0])
         Date, Close, PrevClose = x
         dailyChange = round(((Close - PrevClose)/Close)*100,2) 
         return dailyChange,Date
+
+    def returnCalc(self,df,pf_dict):
+        """
+         This function calculates return amount for portfolio
+         Return type : tuple
+        """
+        date,close = (df.iloc[-1:-2:-1].get(["Date","Close"]).values[0])
+        p = floor(close)
+        init_price = pf_dict['buy_price']
+        vol = pf_dict['quantity']
+        buy_date = pf_dict['date']
+        ret_amount = round(vol*close,2)
+        invested = round(vol*init_price,2)
+        ret_prcent = round(((ret_amount-invested)/invested)*100,2)
+        profit = ret_amount - invested
+        return buy_date,ret_amount,ret_prcent,vol,init_price,invested,profit
+
+    def dateCalc():
+        nw = datetime.now()
+        delta = datetime(year=nw.year,month=nw.month,day=nw.day ,hour=18,minute=00,second=00) -datetime(nw.year,nw.month,nw.day,nw.hour,nw.minute,nw.second)
+        if delta > timedelta(0): #from night 12am to evening 6pm,no close data available
+            dt = datetime.date(datetime.now()) - timedelta(days=1)
+            return dt
+        elif nw.weekday() == 5: #saturday
+            dt = datetime.date(datetime.now()) - timedelta(days=1)
+            return dt
+        elif nw.weekday() == 6: #sunday
+            dt = datetime.date(datetime.now()) - timedelta(days=2)
+            return dt
+        elif nw.weekday() == 0 and delta > timedelta(0): #monday night after 12am
+            dt = datetime.date(datetime.now()) - timedelta(days=3)
+            return dt
+        else:
+            dt = datetime.date(datetime.now())
+            return dt
+
+    def calcTimelyReturn(self,df):
+        start_date,start_close = (df.iloc[0:1].get(["Date","Close"]).values[0])
+        end_date,end_close = (df.iloc[-1:-2:-1].get(["Date","Close"]).values[0])
+        ret = ((end_close-start_close)/start_close)*100
+        return(str(round(ret,2))+" %")
+
+
+    def ChargesCalc(operation,price,quantity):
+        GST = 0.18 # on dp,brokerage,et charge
+        brokerage = 0.0005 # or 20
+        #both buy and sell
+        stt = 0.001          
+        ET_charge = 0.0000345
+        SEBI_Turnover_charge = 0.000001
+        #only on buy
+        stamp_duty = 0.00015
+        #only on sell
+        dp_charge = 13.5
+
+        amount = price*quantity
+        brokerage0 = (amount*brokerage)
+        brokerage_real = brokerage0 if brokerage0 < 20 else 20
+
+
+        if operation.upper() == "BUY":
+            charges = (brokerage_real*(1+GST)) + (amount*(stamp_duty + stt + ET_charge(1+GST) + SEBI_Turnover_charge)) 
+            return operation,charges
+        elif operation.upper() == "SELL":
+            charges = (brokerage_real*(1+GST)) + (amount*(stt + ET_charge(1+GST) + SEBI_Turnover_charge)) + dp_charge*(1+GST) 
+            return operation,charges
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

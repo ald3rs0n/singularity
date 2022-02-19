@@ -1,22 +1,16 @@
 from Backend.settings import BOOL
-from layoutComponents.plotgraph import *
+from layoutComponents.homeplotgraph import *
 from layoutComponents.dashbdLayout import *
-from layoutComponents.dccstore import *
-# from validation import *
+# from layoutComponents.dccstore import *
 
-
-#Initial layout setting
-df = getData('sbin',BOOL)
-# content = offcanvascontent('BANKS',['macd'],on=False)
-navBar = dashbdNavLayout()
-dashboardBody = dashbdBodyLayout()
-
-layout = html.Div(children=[
-                    navBar,
-                    dashboardBody,
-                    storeData,
-                    dcc.Link('Go to Index', href='/trial')
-                    ])
-
+def dashboardlayout():
+    navBar = dashbdNavLayout()
+    dashboardBody = dashbdBodyLayout()
+    layout = html.Div(children=[
+                        navBar,
+                        dashboardBody,
+                        dcc.Link('Go to Index', href='/trial')
+                        ])
+    return layout
 
 
