@@ -6,32 +6,37 @@
     For them who needs to do technical analysis on stockmarket data
 
 ### Installation
-    install [mongodb](https://docs.mongodb.com/manual/installation/)
-    install [ta-lib](https://ta-lib.org/hdr_dw.html)
-    ```Bash
-        $sudo apt install python3
-        $sudo apt install pip3
-        $sudo git clone **reposatoryname**
-        $cd **repo folder**
-        $sudo pip3 install -r requirements.txt
-        $sudo chmod +x index.py
-        $python3 index.py 
-            or
-        $gunicorn index:server
-    ```
+    install 
+[mongodb](https://docs.mongodb.com/manual/installation/)
+
+[ta-lib](https://ta-lib.org/hdr_dw.html)
+
+```Bash
+    $sudo apt install python3
+    $sudo apt install pip3
+    $sudo git clone **reposatoryname**
+    $cd **repo folder**
+    $sudo pip3 install -r requirements.txt
+    $sudo chmod +x index.py
+    $python3 index.py 
+        or
+    $gunicorn index:server
+```
 
 ### HOW IT WORKS
     Gets data from NSE site.
-        1. [NSEpy](https://nsepy.xyz/)
-        2. [NSEtools](https://nsetools.readthedocs.io/en/latest/)
+[NSEpy](https://nsepy.xyz/)
+
+[NSEtools](https://nsetools.readthedocs.io/en/latest/)
 
     Save output to mongo database
-
     Generate plot and get buy and sell signal
-        1. Plot and visualization :    [plotly](https://plotly.com/graphing-libraries/)
-        2. App design:   [Dash](https://dash.plotly.com/)
+[plotly](https://plotly.com/graphing-libraries/) for Graphs
 
-    Analysis by [ta-lib](https://mrjbq7.github.io/ta-lib/)
+[Dash](https://dash.plotly.com/) for App design
+
+    Analysis by 
+[ta-lib](https://mrjbq7.github.io/ta-lib/)
 
     Visualization and analysis tools -> tools.py
 
