@@ -18,15 +18,19 @@ BOOL_PORTFOLIO = False
 
 
 #Network handlling part: IP and PORT
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-try:
-    # doesn't even have to be reachable
-    s.connect(('10.255.255.255', 1))
-    IP = s.getsockname()[0]
-except Exception:
-    IP = '127.0.0.1'
-finally:
-    s.close()
+def getIP():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+        return IP
+    except Exception:
+        IP = '127.0.0.1'
+        return IP
+    finally:
+        s.close()
+
 PORT = 7000
 
 # daq theme settings
@@ -60,7 +64,8 @@ P_RSI = {
 P_STO = {
     'buy':20,
     'sell':80,
-    'fastkp':5,
+    # 'fastkp':5,
+    'fastkp':14, #14 days stochastics
     'slowkp':3, 
     'slowkm':0, 
     'slowdp':3, 
@@ -80,3 +85,24 @@ P_BB = {
     'matype':0
     }
 
+P_MA = {
+    'time':30,
+    'price':'close',
+    'type':'SMA',
+    'name':'SMA 30'
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+# Dividend Section
+
+Dividend_Table_Cache_Date = None

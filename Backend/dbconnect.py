@@ -1,19 +1,35 @@
-from datetime import datetime,date
-from matplotlib.collections import Collection
+import os
 import pymongo
 import pandas as pd
 from random import randint
-import os
+from datetime import datetime,date
 
-from Backend.getstockdata import getDataFromNse,NseStocks, getDataNseBE
 from Backend.settings import TODAY
+from Backend.getstockdata import getDataFromNse,NseStocks, getDataNseBE, getNseQuote
 
 DBURL = "mongodb://127.0.0.1:27017/"
 client = pymongo.MongoClient(DBURL)
 singularitydb = client['singularity']
 
 
+def getQuoteFromDB(stock):
+    collection_name = "quote"
+    data_collection = singularitydb[collection_name]
+    quary = {"symbol":stock.upper()}
+    quote = data_collection.find_one(quary)
+    return quote
 
+def updateQuote(stock_symbol):
+    stock = getNseQuote(stock_symbol)
+    collection_name = "quote"
+    data_collection = singularitydb[collection_name]
+    quary = {"symbol":stock['symbol']}
+    y = data_collection.find_one(quary)
+    if y == None:
+        data_collection.insert_one(stock)
+    else:
+        data_collection.find_one_and_replace(quary,stock)
+    return
 
 # Returns a dataframe from db providing name of the stock
 def getDataFromDB(stock,query={}):
@@ -32,21 +48,19 @@ def getDataFromDB(stock,query={}):
     
 
 # takes list of names of stocks and updates the whole database
-def updateDB(watchlist,start_date):
+def updateDB(stock,start_date):
     end_date = TODAY
-    # end_date = datetime.date(datetime.now())
-    for stock in watchlist:
-        try:
-            df_raw = getDataFromNse(stock,start_date,end_date)
-            updateCollection(df_raw)
-            raw_df_BE = getDataNseBE(stock,start_date,end_date)
-            if not raw_df_BE is None:
-                updateCollection(raw_df_BE)
-                # print("Updated BE data of "+stock)
-            print("Updated "+stock)
-        except Exception as e:
-            print("Failed to update DB!",e)
-            return
+    try:
+        df_raw = getDataFromNse(stock,start_date,end_date)
+        updateCollection(df_raw)
+        raw_df_BE = getDataNseBE(stock,start_date,end_date)
+        if not raw_df_BE is None:
+            updateCollection(raw_df_BE)
+            # print("Updated BE data of "+stock)
+        print(f"Updated {stock}")
+    except Exception as e:
+        print("Failed to update DB!",e)
+        return
 
 
 # updates a collection in database. 
@@ -98,7 +112,7 @@ def updateStockList():
             return ("Data inserted to db...Successfully! "+df_dict[symbol])
 
 
-#unction to get name of a stock from its symbol
+#function to get name of a stock from its symbol
 def getStockname(symbol):
     """
         It takes stock symbol as a arguement and returs name of the stock from database
@@ -108,10 +122,20 @@ def getStockname(symbol):
     y = col_name.find_one({"SYMBOL":symbol})
     name =  y['NAME OF COMPANY']
     name = name.replace("Limited","")
-    # if len(name) > 20:
-    #     name = name[0:20]+"..."
     return name
 
+#Have to work on it
+def getStockSymbol(name):
+    """
+        It takes stock name as a arguement and returs symbol of the stock from database
+        return type : string
+    """
+
+    name = "" # have to made it appropriate
+    col_name =  singularitydb['NSE_stocks_list']
+    y = col_name.find_one({"NAME OF COMPANY":name})
+    symbol =  y['SYMBOL']
+    return symbol
 
 
 # Returns a watchlist from database
@@ -281,6 +305,54 @@ def updatePortfolioData(action,stock,date,price,quantity,target=0,indicator=None
         else:
             return
 
+
+
+
+
+def updateDividendDB(div_list):
+    collection_name = "dividend"
+    data_collection = singularitydb[collection_name]
+    for i in div_list:
+        dividend_dict = {"symbol" : i[0],
+            "type" : i[1],
+            "%" : i[2],
+            "ann date" : i[3],
+            "record date" : i[4],
+            # "ex date" : i[5]
+            # "ann date" : datetime.strptime(i[3],"%d-%m-%Y"),
+            # "record date" : datetime.strptime(i[4],"%d-%m-%Y"),
+            "ex date" : datetime.strptime(i[5],"%d-%m-%Y")
+            }
+        quary = {"symbol" : i[0],
+            "type" : i[1],
+            "ex date" : datetime.strptime(i[5],"%d-%m-%Y")
+            }
+        y = data_collection.find_one(quary)
+        if y == None:
+            data_collection.insert_one(dividend_dict)
+        elif y['record date'] == '-' :
+            data_collection.find_one_and_replace(y,dividend_dict)            
+        elif float(y['%']) == float(0):
+            data_collection.find_one_and_replace(y,dividend_dict)
+            # print(f"working {y},{dividend_dict}")
+    return
+
+
+
+
+
+def getDividendFromDB(query={}):
+    collection_name = "dividend"
+    data_collection = singularitydb[collection_name]
+    if query is None:
+        y = data_collection.find().sort("ex date",1)
+    else:
+        y = data_collection.find(query).sort("ex date",1)
+    df = pd.DataFrame(y)
+    if not df.empty:
+        df.drop('_id',inplace=True,axis='columns')
+        return df
+    return
 
 
 

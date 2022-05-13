@@ -6,6 +6,8 @@ from sqlalchemy import outparam
 from talib import * # Technical analysis library
 import plotly.graph_objects as go
 
+from Backend.settings import P_MA, P_MACD, P_RSI, P_STO
+
 # Avoid any import from any other module from this app to aviod circular import.
 
 
@@ -157,7 +159,7 @@ class StockAnalysisTools():
                     output['price'].append(dff.at[(i+1),'price'])
                     output['adv'].append("Golden Cross")
 
-        return (pd.DataFrame(output).iloc[::-1])
+        return pd.DataFrame(output).iloc[::-1]
 
 
 
@@ -203,7 +205,7 @@ class VisualizationTools():
     # This function plots MACD chart along with candlestick chart of the stock
     def plotMACD(self,pMACD={'price':'close','fp':12,'sp':26,'slp':9}):
         df = self.df
-        dff = StockAnalysisTools(df).analyzeMACD()
+        dff = StockAnalysisTools(df).analyzeMACD(pMACD=P_MACD)
 
         macd, macdsignal, macdhist = MACD(df[pMACD['price'].capitalize()], fastperiod=pMACD['fp'], slowperiod=pMACD['sp'], signalperiod=pMACD['slp'])
         # macd, macdsignal, macdhist = MACD(df['Close'], fastperiod=12, slowperiod=26, signalperiod=9)
@@ -217,7 +219,7 @@ class VisualizationTools():
     # This function plots RSI chart
     def plotRSI(self,pRSI = {'time' : 14,'buy' : 70,'sell' : 30,'price' : 'Close'}):
         df = self.df
-        dff = StockAnalysisTools(df).analyzeRSI()
+        dff = StockAnalysisTools(df).analyzeRSI(pRSI=P_RSI)
         real = RSI(df[pRSI['price'].capitalize()], timeperiod=pRSI['time'])
         fo = go.Scatter(x=df['Date'],y=real,name='RSI',line_color='blue')
         fp = go.Scatter(x=dff['date'],y=dff['price'],mode='markers',marker={'size':7,'color':'green'},name='rsi(B/S)')
@@ -236,7 +238,7 @@ class VisualizationTools():
     # This function plots Stochastics indicator along with candlestick chart of the stock
     def plotStochastics(self,pSTO={'buy':20,'sell':80,'fastkp':5, 'slowkp':3, 'slowkm':0, 'slowdp':3, 'slowdm':0}):
         df = self.df
-        dff = StockAnalysisTools(df).analyzeStochastics()
+        dff = StockAnalysisTools(df).analyzeStochastics(pSTO=P_STO)
         slowk, slowd = STOCH(df['High'], df['Low'], df['Close'], fastk_period=pSTO['fastkp'], slowk_period=pSTO['slowkp'], slowk_matype=pSTO['slowkm'], slowd_period=pSTO['slowdp'], slowd_matype=pSTO['slowdm'])
         # slowk, slowd = STOCH(df['High'], df['Low'], df['Close'], fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
         fa = go.Scatter(x=df['Date'],y=slowk,name='slowk',line_color='skyblue')
@@ -314,7 +316,7 @@ class Utils():
         return(str(round(ret,2))+" %")
 
 
-    def ChargesCalc(operation,price,quantity):
+    def ChargesCalc(self,operation,price,quantity):
         GST = 0.18 # on dp,brokerage,et charge
         brokerage = 0.0005 # or 20
         #both buy and sell
@@ -332,10 +334,10 @@ class Utils():
 
 
         if operation.upper() == "BUY":
-            charges = (brokerage_real*(1+GST)) + (amount*(stamp_duty + stt + ET_charge(1+GST) + SEBI_Turnover_charge)) 
+            charges = round(((brokerage_real*(1+GST)) + (amount*(stamp_duty + stt + ET_charge*(1+GST) + SEBI_Turnover_charge))),2) 
             return operation,charges
         elif operation.upper() == "SELL":
-            charges = (brokerage_real*(1+GST)) + (amount*(stt + ET_charge(1+GST) + SEBI_Turnover_charge)) + dp_charge*(1+GST) 
+            charges = round(((brokerage_real*(1+GST)) + (amount*(stt + ET_charge*(1+GST) + SEBI_Turnover_charge)) + dp_charge*(1+GST)),2) 
             return operation,charges
 
 

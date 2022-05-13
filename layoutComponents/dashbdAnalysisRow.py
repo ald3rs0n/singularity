@@ -1,12 +1,16 @@
-import dash_bootstrap_components as dbc
-from dash import html,Input,Output
-from dash.exceptions import PreventUpdate
 from datetime import datetime
+from dash import html,Input,Output
+import dash_bootstrap_components as dbc
+from dash.exceptions import PreventUpdate
 
 from app import app
-from Backend.dbconnect import getNamesFromPortfolio, getPortfiloData, getStockname, updatePortfolioData
+from Backend.tools import Utils
 from layoutComponents.makeComponents import makeSearchBar
+from Backend.dbconnect import getNamesFromPortfolio, getPortfiloData, getStockname, updatePortfolioData
 
+
+
+utils = Utils()
 
 
 def buy_form():
@@ -62,9 +66,10 @@ def buy_stock(stock,price,quantity,stoploss,target,indicator,buy_date,n0):
             try:
                 buy_date = str(datetime.date(regex(buy_date,"%Y-%m-%d")))
                 updatePortfolioData("BUY",stock,buy_date,price,quantity,target,indicator,stoploss)
-                print(stock,price,quantity,buy_date,stoploss,target,indicator,n0)
+                _,charges = utils.ChargesCalc("BUY",price,quantity)
+                # print(stock,price,quantity,buy_date,stoploss,target,indicator,n0)
                 print("Updating slowly...")
-                return 0,None,None,None,None,None,None,None,"Updated"
+                return 0,None,None,None,None,None,None,None,f"Bought {stock} at {price} ; charges : {charges}"
             except ValueError:
                 raise PreventUpdate
         else:
@@ -121,10 +126,12 @@ def sell_form():
 )
 def sell_stock(stock,price,quantity,sell_date,n0):
     regex = datetime.strptime
+    # buy_price = 0
     if (price is None) or (price == 0) or (quantity is None) or (quantity == 0) or (sell_date is None):
         if not stock is None:
             pf_dict = getPortfiloData(stock)
             # print(pf_dict)
+            # buy_price= pf_dict['buy_price']
             return 0,stock,pf_dict['buy_price'],pf_dict['quantity'],pf_dict['date'],""
         else:
             return 0,None,None,None,None,""
@@ -135,7 +142,11 @@ def sell_stock(stock,price,quantity,sell_date,n0):
                 updatePortfolioData("SELL",stock,sell_date,price,quantity)
                 # print(stock,price,quantity,sell_date,n0)
                 # print("Updating slowly...")
-                return 0,None,None,None,None,"Updated"
+                buy_price = getPortfiloData(stock)['buy_price']
+                _,charges = utils.ChargesCalc("SELL",price,quantity)
+                profit = (float(price) - float(buy_price))*quantity - charges
+                print(buy_price)
+                return 0,None,None,None,None,f"Sold {stock} at {price}; profit {profit}"
             except ValueError:
                 raise PreventUpdate
         else:
@@ -150,8 +161,8 @@ def dashbdAnalysis():
         ]),
         html.Br(),
         dbc.Row(id="op-form"),
-        dbc.Row(html.P(id="return-text")),
-        dbc.Row(html.P(id="sell-return-text")),
+        dbc.Row(dbc.Card(id="return-text")),
+        dbc.Row(dbc.Card(id="sell-return-text")),
     ])
     return container
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from app import *
-from Backend.settings import IP,PORT
+from Backend.settings import PORT
 from layoutComponents.homeplotgraph import *
 from layoutComponents.homeNavBar import *
 import pages.trial as trial

@@ -1,14 +1,15 @@
-import dash_bootstrap_components as dbc
 from dash import html
 import dash_daq as daq
 from math import exp,pow
+import dash_bootstrap_components as dbc
 
 
 from app import app
 from Backend.tools import Utils
-from Backend.analysis import ananlyzePortfolio
+from Backend.stock import Stock
 from Backend.connector import getData
-from Backend.dbconnect import getNamesFromPortfolio,getPortfiloData, getStockname
+from Backend.analysis import ananlyzePortfolio
+from Backend.dbconnect import getNamesFromPortfolio,getPortfiloData
 
 
 def desmos_color_calc(ret_prcent):
@@ -35,28 +36,30 @@ def portfolio():
     utils = Utils()
     profit_list = []
     daily_total_return = []
-    for stock in pf_stocks:
-        stockname = getStockname(stock)
-        df = getData(stock)
-        pf_dict = getPortfiloData(stock)
+    for pf_stock in pf_stocks:
+        stock = Stock(pf_stock)
+        # stockname = stock.name
+        df = stock.df
+        # stockname = getStockname(stock)
+        # df = getData(stock)
+        pf_dict = getPortfiloData(pf_stock)
 
         dt,close = (df.iloc[-1:-2:-1].get(["Date","Close"]).values[0])
 
         updown,dtt = utils.dailyPercentageChangeCalc(df)
         buy_date,ret_amnt,ret_prcent,vol,init_price,invested,profit = utils.returnCalc(df,pf_dict)
 
-        suggestion,details = ananlyzePortfolio(stock)
-
+        suggestion,details = ananlyzePortfolio(stock.symbol)
 
         daily_return = (updown*vol*close)/100
         daily_total_return.append(daily_return)
         profit_list.append(profit)
 
 
-        if len(stockname) > 20:
-            cardtitle = stock
+        if len(stock.name) > 20:
+            cardtitle = stock.symbol
         else:
-            cardtitle = stockname.upper()
+            cardtitle = stock.name.upper()
 
         bordercolor = desmos_color_calc(ret_prcent)
         # desmossize = desmos_size_calc(ret_amnt)

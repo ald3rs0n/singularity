@@ -9,9 +9,10 @@ from dash.dependencies import Input,Output,State
 from app import app
 from Backend.connector import getData
 from Backend.analysis import doAnalysis
+from Backend.dbconnect import getWatchlist
 from layoutComponents.makeComponents import *
-from Backend.settings import QUARTER, TODAY,WEEK,WATCHLISTPERIOD
-from Backend.dbconnect import getWatchlist,getDataFromDB
+from Backend.settings import TODAY,WATCHLISTPERIOD
+from layoutComponents.homeDividendTab import makeDividendModal
 
 
 def makeCards(watchlist,args,adv):
@@ -19,8 +20,8 @@ def makeCards(watchlist,args,adv):
         wlist,_id = getWatchlist(watchlist)      
         cards = []
         for stockname in wlist:
-            dt_quarter = datetime.date(datetime.now()) - QUARTER
-            query_quarter = {"Date" : {"$gt" : str(dt_quarter)}}
+            # dt_quarter = datetime.date(datetime.now()) - QUARTER
+            # query_quarter = {"Date" : {"$gt" : str(dt_quarter)}}
             # df = getDataFromDB(stockname,query_quarter)
             df = getData(stockname)
             val = doAnalysis(df,args)
@@ -158,14 +159,18 @@ def navLayout(content,modal):
                 dcc.Link('Dashboard', href='/dashboard',style={'color':'#dddddd','text-decoration':'none'}),
             ),color='light')
     
+    dividend = makeDividendModal()
+
+
+
     navbar = dbc.Navbar(
         dbc.Container(
             [
                 dbc.Col(dbc.NavItem(toolsrow)),
                 dbc.Col(dbc.NavItem(dashboard)),
                 dbc.Col(dbc.NavItem(modal)),
+                dbc.Col(dbc.NavItem(dividend)),
                 dbc.Col(dbc.NavbarToggler(id="navbar-toggler", n_clicks=0)),
-                # dbc.Col(dbc.NavItem()),
                 dbc.Col(dbc.NavItem(makeSearchBar('home_searchbar'))),
                 dbc.Col(dbc.NavItem(analysisrow),width={"size": 1, "offset": 1}),
                 dbc.Col(dbc.NavItem(dbc.Button(html.Img(src='static/sync.ico'),id="sync",n_clicks=0,color='dark')),width={"size": 1, "order": "last"}),

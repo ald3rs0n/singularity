@@ -91,7 +91,7 @@ def dividend(nse,ptn):
 
     f = open('static/'+fname,'a')
     f.write("Company name,Purpose,Ex-dividend Date,Dividend Yield,Dividend,Base Price\r\n")
-    g = open('static'+gname,'a')
+    g = open('static/'+gname,'a')
     g.write("Company name,Ex-dividend Date,Dividend Yield,Dividend,Base Price,Upcoming\r\n")
 
     # calling to nse API

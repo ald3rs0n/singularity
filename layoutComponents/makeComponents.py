@@ -33,7 +33,8 @@ def makeListForWatchlist(watchlist_name):
     watchlist,_id = getWatchlist(watchlist_name)
     item_list = []
     for stock in watchlist:
-        df = getData(stock,WEEK)
+        df = getData(stock)
+        # df = getData(stock,WEEK)
         if not df is None:
             price = (df.tail(1))['Close']
             dailyPriceChange,Date = utilis.dailyPercentageChangeCalc(df)

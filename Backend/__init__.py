@@ -1,3 +1,4 @@
+from .stock import *
 from .tools import *
 from .settings import *
 from .analysis import *

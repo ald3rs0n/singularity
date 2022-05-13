@@ -1,7 +1,7 @@
-from dash.exceptions import PreventUpdate
-import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 from dash import html,dcc
+import dash_bootstrap_components as dbc
+from dash.exceptions import PreventUpdate
+from dash.dependencies import Input, Output, State
 
 from app import app
 from layoutComponents.dashbdwlModal import *
