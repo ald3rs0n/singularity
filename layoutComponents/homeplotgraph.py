@@ -6,7 +6,7 @@ from app import *
 import pandas as pd
 from dash import Output,Input
 from dash.exceptions import PreventUpdate
-from Backend.connector import getData
+from Backend.stock import Stock
 
 
 def makeGraph(df,args,tsh):
@@ -16,7 +16,7 @@ def makeGraph(df,args,tsh):
         y_range_min = min(df['Low'].tail(90))
         y_range_max = max(df['High'].tail(90))
 
-        title = "Charts of {0}".format(name)
+        title = f"Charts of {name}"
         fig = go.Figure(
             layout=go.Layout(
                 # hovermode="x",
@@ -146,10 +146,11 @@ def makeGraph(df,args,tsh):
     Input("switches-input", "value"),
     Input("toggle-switch", "value")],
 )
-def output_graph(stock,indicator,tsh):
-    if stock is None or indicator is None:
+def output_graph(symbol,indicator,tsh):
+    if symbol is None or indicator is None:
         raise PreventUpdate
-    df = getData(stock)
+    stock = Stock(symbol)
+    df = stock.df
     if df is None:
         raise PreventUpdate
     fig = makeGraph(df,indicator,tsh)

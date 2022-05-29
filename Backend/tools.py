@@ -1,8 +1,6 @@
-from ast import operator
 from datetime import datetime,date,timedelta
 from math import floor
 import pandas as pd
-from sqlalchemy import outparam
 from talib import * # Technical analysis library
 import plotly.graph_objects as go
 
@@ -184,10 +182,10 @@ class VisualizationTools():
                             high=df['High'],
                             low=df['Low'],
                             close=df['Close'],
-                            increasing_line_color = 'cyan',
-                            increasing_fillcolor = 'cyan',
-                            decreasing_line_color = 'gray',
-                            decreasing_fillcolor = 'gray',
+                            increasing_line_color = '#0ead00',
+                            increasing_fillcolor = '#0ead00',
+                            decreasing_line_color = '#ff0000',
+                            decreasing_fillcolor = '#ff0000',
                             name=(df['Symbol'])[0])
             return fc
 
@@ -213,7 +211,7 @@ class VisualizationTools():
         # macdsignal.dropna(inplace=True)
         fa = go.Scatter(x=df['Date'],y=macd,name='Macd',line_color='white')
         fb = go.Scatter(x=df['Date'],y=macdsignal,name='Signal',line_color='red')
-        fc = go.Scatter(x=dff['date'],y=dff['price'],mode='markers',marker={'size':10,'color':'orange'},name='macd(B/S)')
+        fc = go.Scatter(x=dff['date'],y=dff['price'],mode='markers',marker={'size':8,'color':'#ababab'},name='macd(B/S)')
         return fa,fb,fc
 
     # This function plots RSI chart
@@ -222,7 +220,7 @@ class VisualizationTools():
         dff = StockAnalysisTools(df).analyzeRSI(pRSI=P_RSI)
         real = RSI(df[pRSI['price'].capitalize()], timeperiod=pRSI['time'])
         fo = go.Scatter(x=df['Date'],y=real,name='RSI',line_color='blue')
-        fp = go.Scatter(x=dff['date'],y=dff['price'],mode='markers',marker={'size':7,'color':'green'},name='rsi(B/S)')
+        fp = go.Scatter(x=dff['date'],y=dff['price'],mode='markers',marker={'size':9,'color':'#c4c4c4'},name='rsi(B/S)')
         return fo,fp
 
     # This function plots SMA or EMA chart along with candlestick chart of the stock
@@ -243,7 +241,7 @@ class VisualizationTools():
         # slowk, slowd = STOCH(df['High'], df['Low'], df['Close'], fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
         fa = go.Scatter(x=df['Date'],y=slowk,name='slowk',line_color='skyblue')
         fb = go.Scatter(x=df['Date'],y=slowd,name='slowd',line_color='yellow')
-        fc = go.Scatter(x=dff['date'],y=dff['price'],mode='markers',marker={'size':7,'color':'pink'},name='sto(B/S)')
+        fc = go.Scatter(x=dff['date'],y=dff['price'],mode='markers',marker={'size':7,'color':'#dedede'},name='sto(B/S)')
 
         return fa,fb,fc
 

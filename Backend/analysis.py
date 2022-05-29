@@ -2,8 +2,7 @@ from datetime import date, datetime, timedelta
 from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 
-from Backend.connector import getData
-from Backend.dbconnect import getPortfiloData
+from Backend.stock import Stock
 from Backend.settings import P_RSI,P_MACD,P_STO
 from Backend.tools import StockAnalysisTools as SAT, Utils
 
@@ -34,10 +33,11 @@ def doAnalysis(df,args):
 
 
 #Function for analyze stokcs in portfolio
-def ananlyzePortfolio(stock):
+def ananlyzePortfolio(symbol):
     # x = getPortfiloData(stock)
-    # df = getDataFromDB(stock)
-    df = getData(stock)
+    stock = Stock(symbol)
+    df = stock.df
+    # df = getData(stock)
     dt = Utils.dateCalc()
     sat = SAT(df)
 

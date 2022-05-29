@@ -1,13 +1,13 @@
 import pandas as pd
 import dash_daq as daq
 from dash import html,dcc
-from datetime import timedelta,datetime
+from datetime import timedelta
+from Backend.stock import Stock
 import  dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from dash.dependencies import Input,Output,State
 
 from app import app
-from Backend.connector import getData
 from Backend.analysis import doAnalysis
 from Backend.dbconnect import getWatchlist
 from layoutComponents.makeComponents import *
@@ -20,10 +20,8 @@ def makeCards(watchlist,args,adv):
         wlist,_id = getWatchlist(watchlist)      
         cards = []
         for stockname in wlist:
-            # dt_quarter = datetime.date(datetime.now()) - QUARTER
-            # query_quarter = {"Date" : {"$gt" : str(dt_quarter)}}
-            # df = getDataFromDB(stockname,query_quarter)
-            df = getData(stockname)
+            stock = Stock(stockname)
+            df = stock.df
             val = doAnalysis(df,args)
             if not val is None:
                 if len(adv) == 1:

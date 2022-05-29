@@ -70,7 +70,7 @@ def get_fundamentals(symbol,ex="in",eqSubCat="Fundamental"):
     terrific_view = html_to_json.convert_tables(str(all_tables[0]))[0][0]
     stedy_view = html_to_json.convert_tables(str(all_tables[1]))[0][0]
     risky_view = html_to_json.convert_tables(str(all_tables[2]))[0][0]
-    print("Requesting top Research!!")
+    print("Requesting TopResearch!!")
     # pprint(fundamentals)
     return fundamentals
 

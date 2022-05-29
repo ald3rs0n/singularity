@@ -19,7 +19,7 @@ def generateDividendTable():
             html.Tr([
                 html.Th("Symbol"), 
                 html.Th("Type"), 
-                html.Th("RS"), 
+                html.Th("RS/Face Value"), 
                 # html.Th("Yield %"), 
                 # html.Th("Announcement Date"),
                 html.Th("Ex-Dividend Date"),
@@ -35,7 +35,7 @@ def generateDividendTable():
         symbol = v['symbol']
         # stock = Stock(symbol)
         ex_date = datetime.strftime(v['ex date'],"%d-%m-%Y")
-        amount = float(v['%'])/10
+        amount = float(v['%'])/100
         # div_yield = divYield(amount,stock.close)
         row = html.Tr([
                 html.Td(symbol), 

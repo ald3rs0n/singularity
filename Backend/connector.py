@@ -19,12 +19,15 @@ def getData(stock,time=YEAR):
         last_date = datetime.date(datetime.strptime(date,"%Y-%m-%d"))
         dt = Utils.dateCalc()
         if last_date == dt:
+            # print(df.tail())
             return df
         else:
             # updateDB([stock],start_date)
             updateDB(stock,last_date)
             df = getDataFromDB(stock)
+            # print(df.tail())
             return df
+    # print(df.tail())
     return df
 
 def getQuote(stock):
@@ -39,7 +42,7 @@ def getQuote(stock):
         last_date = datetime.date(datetime.strptime(date,"%d-%m-%Y"))
         dt = Utils.dateCalc()
         # print(date,last_date,dt)
-        if last_date >= dt:
+        if last_date >= dt: 
             return quote
         else:
             updateQuote(stock)

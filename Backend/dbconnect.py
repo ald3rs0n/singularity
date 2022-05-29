@@ -109,7 +109,8 @@ def updateStockList():
         if y == None:
             data = {'SYMBOL': symbol, 'NAME OF COMPANY': df_dict[symbol]}
             data_collection.insert_one(data)
-            return ("Data inserted to db...Successfully! "+df_dict[symbol])
+            print("Data inserted to db...Successfully! "+df_dict[symbol])
+    return
 
 
 #function to get name of a stock from its symbol

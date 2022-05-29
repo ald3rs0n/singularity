@@ -1,14 +1,15 @@
-from dash.dash import Dash
-from dash.html.Div import Div
+# from dash.dash import Dash
+# from dash.html.Div import Div
 import dash_bootstrap_components as dbc
-from dash import html,dcc,Input,Output,State
+from dash import html,dcc
+from time import time
 
 from app import app
 from Backend.dbconnect import getStocksList, getWatchlistNames,getWatchlist,getStocksList
 from Backend.tools import Utils
 from Backend.settings import BOOL,WEEK
-from Backend.connector import getData
-
+from Backend.stock import Stock
+from Backend.ThreadWithResult import ThreadWithResult
 
 def makeSearchBar(id):
     STDF = getStocksList()
@@ -26,14 +27,26 @@ def makeSearchBar(id):
     return search_bar
 
 def makeListForWatchlist(watchlist_name):
+    time0 = time()
     """
     This function takes name of a watchlist and returns a html list of names of stocks in that list 
     """
     utilis = Utils()
     watchlist,_id = getWatchlist(watchlist_name)
     item_list = []
-    for stock in watchlist:
-        df = getData(stock)
+    threads = []
+    for symbol in watchlist:
+        newThread = ThreadWithResult(target=Stock,args=(symbol,))
+        newThread.start()
+        threads.append(newThread)
+    for thread in threads:
+        thread.join()
+        try:
+            stock =  thread.result
+        except Exception as e:
+            pass
+        # stock = Stock(symbol)
+        df = stock.df
         # df = getData(stock,WEEK)
         if not df is None:
             price = (df.tail(1))['Close']
@@ -46,7 +59,7 @@ def makeListForWatchlist(watchlist_name):
                 color = "red"
             item = dbc.ListGroupItem(
                     dbc.Row([
-                        dbc.Col([html.P(stock.upper(),className="mb-1")]),
+                        dbc.Col([html.P(stock.symbol.upper(),className="mb-1")]),
                         dbc.Col([html.P(str(dailyPriceChange)+" %",className="mb-1",style={'color':color})]),
                         dbc.Col([
                             html.P(price,className="mb-1"),
@@ -57,6 +70,8 @@ def makeListForWatchlist(watchlist_name):
                     ]),
                 )
             item_list.append(item)
+    time1 = time()
+    print(f"Watchlist loading time: {round(time1-time0,2)}sec")
     return (dbc.ListGroup(item_list))
 
 

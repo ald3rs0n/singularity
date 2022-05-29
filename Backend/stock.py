@@ -26,14 +26,19 @@ class Stock():
 
         self.df = getData(self.symbol)
 
+
     def fundamentals(self):
         fundamental = get_fundamentals(self.symbol)
         return fundamental
     def dividend(self):
         ptn = '((RS |RE )[0-9.]+)'
-        dividend = (str((re.findall(ptn,self.purpose))[0][0])[2::])
+        dividend = 0
+        if self.purpose is not None:
+            try:
+                dividend = (str((re.findall(ptn,self.purpose))[0][0])[2::])
+            except IndexError as e:
+                print(e)
         return dividend
-
 
     def divYield(self):
         dividend = self.dividend()
